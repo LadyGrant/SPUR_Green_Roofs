@@ -17,8 +17,9 @@ Explanation of Flags
 | `--type`        | Specifies EMP format for paired-end reads (expects `forward.fastq.gz`, `reverse.fastq.gz`, and `barcodes.fastq.gz`) |
 | `--input-path`  | Path to the folder containing the three raw FASTQ files                                                             |
 | `--output-path` | Name of the output `.qza` file that wraps your imported reads in QIIME2's artifact format                           |
+
 **Outputs**
-`emp-paired-end-sequences.qza` QIIME2 artifact containing raw multiplexed paired-end sequences in EMP forma
+`emp-paired-end-sequences.qza` QIIME2 artifact containing raw multiplexed paired-end sequences in EMP format 
 
 ## 2. Demultiplex the Sequences
 
@@ -65,7 +66,7 @@ Explanation of Flags
 - `--p-no-golay-error-correction`: ⚠️ Although our primers use 12-bp Golay barcodes (per the original EMP protocol), modern Illumina sequencing pipelines output exact barcode reads without applying Golay error correction. Therefore, we disable error correction using `--p-no-golay-error-correction` to ensure correct sample assignment during demultiplexing. This practice reflects updates in sequencing accuracy and lab demux workflows not reflected in older EMP documentation.
 
 **Outputs**
-`demux.qza` Per-sample demultiplexed paired-end sequences (used for DADA2) 
+`demux.qza` Per-sample demultiplexed paired-end sequences (used for DADA2)  
 `demux-details.qza` Barcode matching and assignment statistics (useful for QC/troubleshooting)
 
 ## 3. Visualize sequence reads and sequence quality
@@ -74,8 +75,9 @@ After demultiplexing, it's important to assess the number of reads per sample an
 qiime demux summarize --i-data demux.qza --o-visualization demux.qzv
 ```
 **Outputs** 
-`demux.qzv` Interactive visualization of sequence counts and quality scores per sample
-Open the resulting .qzv file in [QIIME2 View](https://view.qiime2.org/) to explore the interactive summary.
+`demux.qzv` Interactive visualization of sequence counts and quality scores per sample. 
+
+Open the resulting .qzv file in [QIIME2 View](https://view.qiime2.org/) to explore the interactive summary. 
 
 # Overview of demux.qzv Summary Tabs
 
@@ -163,9 +165,9 @@ qiime dada2 denoise-paired \
 | `--p-n-threads`                | Number of CPU threads to use. Set to match available resources for faster processing         |
 
 **Outputs**
-`table.qza` Feature table with ASV counts per sample
+`table.qza` Feature table with ASV counts per sample 
 `rep-seqs.qza` FASTA-formatted sequences for each ASV  
-`denoising-stats.qza` Summary of reads kept/lost at each DADA2 filtering step
+`denoising-stats.qza` Summary of reads kept/lost at each DADA2 filtering step 
 
 
 
