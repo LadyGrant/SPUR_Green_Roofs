@@ -62,4 +62,5 @@ Explanation of Flags
 
 **Notes:**
 - `--p-no-rev-comp-mapping-barcodes`: Use this flag if your sequencing core confirmed that the barcodes are already in the correct orientation. If your barcodes were sequenced on the forward read (as is standard for 16S EMP protocols), this flag is typically appropriate.
-- `--p-no-golay-error-correction`: Use this only if you know your barcodes are not Golay-encoded. Golay correction is standard in EMP protocols, but some custom primer plates or in-house barcoding schemes may not use it. Including this flag when using non-Golay barcodes prevents incorrect error correction and potential barcode misassignment.
+- `--p-no-golay-error-correction`: ⚠️ Although our primers use 12-bp Golay barcodes (per the original EMP protocol), modern Illumina sequencing pipelines output exact barcode reads without applying Golay error correction. Therefore, we disable error correction using `--p-no-golay-error-correction` to ensure correct sample assignment during demultiplexing. This practice reflects updates in sequencing accuracy and lab demux workflows not reflected in older EMP documentation.
+
