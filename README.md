@@ -64,3 +64,63 @@ Explanation of Flags
 - `--p-no-rev-comp-mapping-barcodes`: Use this flag if your sequencing core confirmed that the barcodes are already in the correct orientation. If your barcodes were sequenced on the forward read (as is standard for 16S EMP protocols), this flag is typically appropriate.
 - `--p-no-golay-error-correction`: ⚠️ Although our primers use 12-bp Golay barcodes (per the original EMP protocol), modern Illumina sequencing pipelines output exact barcode reads without applying Golay error correction. Therefore, we disable error correction using `--p-no-golay-error-correction` to ensure correct sample assignment during demultiplexing. This practice reflects updates in sequencing accuracy and lab demux workflows not reflected in older EMP documentation.
 
+## 3. Visualize sequence reads and sequence quality
+After demultiplexing, it's important to assess the number of reads per sample and the quality of those reads before proceeding with denoising.
+```
+qiime demux summarize --i-data demux.qza --o-visualization demux.qzv
+```
+Open the resulting .qzv file in [QIIME2 View](https://view.qiime2.org/) to explore the interactive summary.
+
+# Overview of demux.qzv Summary Tabs
+
+Demultiplexed Sequence Counts Summary
+- Table with min, max, mean, median, and total read counts across all samples
+- Helps you get a quick snapshot of sequencing depth
+<img width="1072" alt="Screenshot 2025-05-08 at 7 49 45 PM" src="https://github.com/user-attachments/assets/a127a6a7-7a08-4481-a66b-2341c897c261" />
+
+Forward and Reverse Reads Frequency Histograms
+Show the distribution of sequence counts per sample for each read direction
+Look for:
+- A single main peak = consistent sequencing
+- Long tails = outliers or uneven library concentration
+<img width="1375" alt="Screenshot 2025-05-08 at 7 50 42 PM" src="https://github.com/user-attachments/assets/4b20fcc8-1f83-4272-b946-50cb38ae4a5c" />
+
+Per-Sample Sequence Counts
+Make sure samples expected to have high biomass have relatively high counts, and blanks/NTCs remain low. If anything looks suspicious, you may want to double-check your barcode assignments or rerun demux with updated metadata.
+
+You can download the sample counts as a `.tsv` file for further inspection. If you're working from a plate map, it's a good idea to paste these read counts back into the plate layout. This helps you visually identify any systematic issues. For example, if an entire row or column has lower read counts, it could indicate a pipetting error, primer failure, or reagent issue during library prep or PCR.
+
+Interactive Quality Plot
+- Displays per-base quality scores for forward and reverse reads
+- Use this plot to guide trimming settings for DADA2 (--p-trunc-len-f and --p-trunc-len-r)
+- Look for median quality scores above Q30 in your usable regions
+
+**Why are reverse reads usually lower in quality?**  
+Reverse reads often show a faster drop-off in quality due to how Illumina sequencing-by-synthesis chemistry works. The longer the read, the more cycles the machine runs, which leads to increased error accumulation, especially toward the tail of the reverse read.
+
+**How much can we trim while still keeping usable data?**  
+You need to retain enough read length to ensure overlap for successful merging. For the 515F–806R primers targeting the V4 region of 16S rRNA:
+- The expected amplicon length is ~253 bp
+- Merging requires at least 20–30 bp of overlap between forward and reverse reads
+- So, your trimmed forward + reverse read lengths should add up to at least **~273 bp**
+
+Example:  
+- Forward read trimmed to 220 bp  
+- Reverse read trimmed to 200 bp  
+- Total = 420 bp  
+- Overlap = 420 – 253 = **167 bp**, plenty for successful merging
+
+Reminder: Over-trimming will result in too little overlap for read merging; under-trimming can retain low-quality bases that increase error rates. Always use the quality plot to balance both.
+<img width="1425" alt="Screenshot 2025-05-08 at 7 57 44 PM" src="https://github.com/user-attachments/assets/3544c0d1-c4be-4ab9-9299-ad871019eb39" />
+
+
+
+
+
+
+
+
+
+
+
+
