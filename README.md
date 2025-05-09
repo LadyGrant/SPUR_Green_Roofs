@@ -60,3 +60,6 @@ Explanation of Flags
 | `--o-per-sample-sequences`         | Output artifact: demultiplexed paired-end sequences separated by sample                         |
 | `--o-error-correction-details`     | Output file that includes stats on barcode matching and error correction (for QC/debugging)     |
 
+**Notes:**
+- `--p-no-rev-comp-mapping-barcodes`: Use this flag if your sequencing core confirmed that the barcodes are already in the correct orientation. If your barcodes were sequenced on the forward read (as is standard for 16S EMP protocols), this flag is typically appropriate.
+- `--p-no-golay-error-correction`: Use this only if you know your barcodes are not Golay-encoded. Golay correction is standard in EMP protocols, but some custom primer plates or in-house barcoding schemes may not use it. Including this flag when using non-Golay barcodes prevents incorrect error correction and potential barcode misassignment.
