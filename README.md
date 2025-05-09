@@ -17,7 +17,8 @@ Explanation of Flags
 | `--type`        | Specifies EMP format for paired-end reads (expects `forward.fastq.gz`, `reverse.fastq.gz`, and `barcodes.fastq.gz`) |
 | `--input-path`  | Path to the folder containing the three raw FASTQ files                                                             |
 | `--output-path` | Name of the output `.qza` file that wraps your imported reads in QIIME2's artifact format                           |
-
+**Outputs**
+`emp-paired-end-sequences.qza` QIIME2 artifact containing raw multiplexed paired-end sequences in EMP forma
 
 ## 2. Demultiplex the Sequences
 
@@ -47,7 +48,6 @@ qiime demux emp-paired \
   --o-per-sample-sequences demux.qza \
   --o-error-correction-details demux-details.qza
 ```
-
 Explanation of Flags
 
 | Flag                                | Description                                                                                      |
@@ -64,11 +64,17 @@ Explanation of Flags
 - `--p-no-rev-comp-mapping-barcodes`: Use this flag if your sequencing core confirmed that the barcodes are already in the correct orientation. If your barcodes were sequenced on the forward read (as is standard for 16S EMP protocols), this flag is typically appropriate.
 - `--p-no-golay-error-correction`: ⚠️ Although our primers use 12-bp Golay barcodes (per the original EMP protocol), modern Illumina sequencing pipelines output exact barcode reads without applying Golay error correction. Therefore, we disable error correction using `--p-no-golay-error-correction` to ensure correct sample assignment during demultiplexing. This practice reflects updates in sequencing accuracy and lab demux workflows not reflected in older EMP documentation.
 
+**Outputs**
+`demux.qza` Per-sample demultiplexed paired-end sequences (used for DADA2) 
+`demux-details.qza` Barcode matching and assignment statistics (useful for QC/troubleshooting)
+
 ## 3. Visualize sequence reads and sequence quality
 After demultiplexing, it's important to assess the number of reads per sample and the quality of those reads before proceeding with denoising.
 ```
 qiime demux summarize --i-data demux.qza --o-visualization demux.qzv
 ```
+**Outputs** 
+`demux.qzv` Interactive visualization of sequence counts and quality scores per sample
 Open the resulting .qzv file in [QIIME2 View](https://view.qiime2.org/) to explore the interactive summary.
 
 # Overview of demux.qzv Summary Tabs
@@ -113,8 +119,53 @@ Example:
 Reminder: Over-trimming will result in too little overlap for read merging; under-trimming can retain low-quality bases that increase error rates. Always use the quality plot to balance both.
 <img width="1425" alt="Screenshot 2025-05-08 at 7 57 44 PM" src="https://github.com/user-attachments/assets/3544c0d1-c4be-4ab9-9299-ad871019eb39" />
 
+## 4. Run DADA2 to denoise and merge sequence reads
 
+```
+#!/bin/bash
+#SBATCH --nodes=1
+#SBATCH --ntasks=4
+#SBATCH --time=4-00:00:00
+#SBATCH --mail-type=BEGIN,END,FAIL
+#SBATCH --mem=20gb
+#SBATCH --nodelist=zenith
+#SBATCH --mail-user=First.Last@colostate.edu
+#SBATCH --mail-type=BEGIN,END,FAIL
+#SBATCH --partition=wrighton-hi,wrighton-low
+#SBATCH --job-name=DADA2
 
+cd ..
+
+source /home/opt/Miniconda3/miniconda3/bin/activate qiime2-2023.9
+
+qiime dada2 denoise-paired \
+  --i-demultiplexed-seqs demux.qza \
+  --p-trim-left-f 0 \
+  --p-trim-left-r 0 \
+  --p-trunc-len-f 220 \
+  --p-trunc-len-r 200 \
+  --o-table table.qza \
+  --o-representative-sequences rep-seqs.qza \
+  --o-denoising-stats denoising-stats.qza
+```
+### Explanation of Flags for `qiime dada2 denoise-paired`
+
+| Flag                           | Description                                                                                  |
+|--------------------------------|----------------------------------------------------------------------------------------------|
+| `--i-demultiplexed-seqs`       | The input `.qza` file containing demultiplexed paired-end reads (from Step 2)                |
+| `--p-trunc-len-f`              | Truncate forward reads at position 220. Removes low-quality tails.                           |
+| `--p-trunc-len-r`              | Truncate reverse reads at position 200. Removes low-quality tails.                           |
+| `--p-trim-left-f`              | Trims bases from the start of each forward read (used to remove primers if necessary)        |
+| `--p-trim-left-r`              | Trims bases from the start of each reverse read (used to remove primers if necessary)        |
+| `--o-table`                    | Output file containing the ASV feature table (samples x ASVs)                                |
+| `--o-representative-sequences` | Output file containing representative sequences for each ASV                                 |
+| `--o-denoising-stats`          | Output file containing read filtering and chimera removal statistics per sample              |
+| `--p-n-threads`                | Number of CPU threads to use. Set to match available resources for faster processing         |
+
+**Outputs**
+`table.qza` Feature table with ASV counts per sample
+`rep-seqs.qza` FASTA-formatted sequences for each ASV  
+`denoising-stats.qza` Summary of reads kept/lost at each DADA2 filtering step
 
 
 
