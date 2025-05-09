@@ -1,26 +1,26 @@
-# SPUR_Green_Roofs
-1. Import Sequence files into your working directory
-we uses the 515/806 V4 primers from the Earth Microbiome Project
-Earth Microbiome Project protocol: https://earthmicrobiome.org/protocols-and-standards/
-```
-qiime tools import --type EMPPairedEndSequences --input-path reads/ --output-path emp-paired-end-sequences.qza 
-```
+# SPUR rooftop agrivoltaic 16S QIIME2 pipeline
+## 1. Import Sequence Files into QIIME2
 
-Explanation of Flags:
-Flag		   |	Description
-__________________________________________________________________________________________
-			   |
---type 		   |	Specifies that the input is in Earth Microbiome Project format 
-			   |	for paired-end reads (i.e., contains forward.fastq.gz, 
-			   |	reverse.fastq.gz, and barcodes.fastq.gz)
-_______________|__________________________________________________________________________							  
---input-path   | Path to your raw sequencing directory containing the three FASTQ files
-_______________|__________________________________________________________________________
---output-path  | Name of the output artifact that wraps your imported reads in 
-			   | QIIME2’s .qza format for further processing
-_______________|__________________________________________________________________________ 
+We used the **515F/806R V4 primers** from the Earth Microbiome Project (EMP): 
+ [Earth Microbiome Project protocol](https://earthmicrobiome.org/protocols-and-standards/)
 
-2. Demultiplex the sequences
+```
+qiime tools import \
+  --type EMPPairedEndSequences \
+  --input-path reads \
+  --output-path emp-paired-end-sequences.qza
+```
+Explanation of Flags
+
+| Flag            | Description                                                                                                         |
+| --------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `--type`        | Specifies EMP format for paired-end reads (expects `forward.fastq.gz`, `reverse.fastq.gz`, and `barcodes.fastq.gz`) |
+| `--input-path`  | Path to the folder containing the three raw FASTQ files                                                             |
+| `--output-path` | Name of the output `.qza` file that wraps your imported reads in QIIME2's artifact format                           |
+
+
+## 2. Demultiplex the Sequences
+
 ```
 #!/bin/bash
 #SBATCH --nodes=1
@@ -48,5 +48,15 @@ qiime demux emp-paired \
   --o-error-correction-details demux-details.qza
 ```
 
-Inputs: metadata.txt
-outputs: demux.qza, demux-details.qza
+Explanation of Flags
+
+| Flag                                | Description                                                                                      |
+|-------------------------------------|--------------------------------------------------------------------------------------------------|
+| `--m-barcodes-file`                | Metadata file containing the barcode sequences for each sample                                  |
+| `--m-barcodes-column`              | Column name in the metadata file that contains the barcode sequences                            |
+| `--p-no-rev-comp-mapping-barcodes` | Prevents QIIME2 from reverse complementing the barcodes in the metadata file                    |
+| `--p-no-golay-error-correction`    | Disables Golay error correction on barcode sequences (use when not using Golay barcodes)        |
+| `--i-seqs`                         | The input artifact containing raw multiplexed EMP paired-end sequences                          |
+| `--o-per-sample-sequences`         | Output artifact: demultiplexed paired-end sequences separated by sample                         |
+| `--o-error-correction-details`     | Output file that includes stats on barcode matching and error correction (for QC/debugging)     |
+
