@@ -29,7 +29,7 @@ Explanation of Flags
 #SBATCH --mail-type=BEGIN,END,FAIL
 #SBATCH --mem=128gb
 #SBATCH --nodelist=zenith
-#SBATCH --mail-user=eryn.grant@colostate.edu
+#SBATCH --mail-user=First.Last@colostate.edu
 #SBATCH --mail-type=BEGIN,END,FAIL
 #SBATCH --partition=wrighton-hi,wrighton-low
 #SBATCH --job-name=demux
