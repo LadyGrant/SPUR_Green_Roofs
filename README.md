@@ -169,10 +169,38 @@ qiime dada2 denoise-paired \
 `rep-seqs.qza` FASTA-formatted sequences for each ASV  
 `denoising-stats.qza` Summary of reads kept/lost at each DADA2 filtering step 
 
+## 5. Visualize DADA2 outputs
 
+Visualize denoising stats
+```
+qiime metadata tabulate \
+--m-input-file denoising-stats.qza \
+--o-visualization denoising-stats.qzv
+```
+### DADA2 Denoising Stats Explained
 
+| Column                   | What it means                                             | What to look for                             |
+|--------------------------|-----------------------------------------------------------|----------------------------------------------|
+| `sample-id`              | Your sample names                                         | Check that all expected samples are present  |
+| `input`                  | Raw paired-end read count per sample before any filtering | Samples <10,000 reads might be too shallow   |
+| `filtered`               | Reads retained after quality filtering `--p-trunc-len)`   | Typically ~80–95% of input is good           |
+| `percentage of input passed filter`| % of reads that passed filtering step           | <70% may suggest poor quality or trimming problems|
+| `denoised`   | Reads that passed filtering and were successfully denoised (ASVs inferred) | Should be similar to filtered           |
+| `merged`     | Successfully merged forward and reverse reads | This number drops if reads are too short or don’t overlap well       |
+| `non-chimeric` | Merged reads after chimera removal    | This is what gets used in downstream analysis **(your final usable data)** |
+| `percentage of input non-chimeric` | % of original reads that made it all the way through | <50% suggests high loss; ideally you want >60% of input|
 
-
+```
+qiime feature-table summarize \
+ --i-table table.qza  \
+ --o-visualization table.qzv \
+ --m-sample-metadata-file metadata.txt
+```
+```
+qiime feature-table tabulate-seqs \
+--i-data rep-seqs.qza \
+--o-visualization rep-seqs.qzv
+```
 
 
 
