@@ -394,7 +394,7 @@ You will need to go into this folder and then into a folder named `data`. Once t
 
 Convert from .biom to .txt
 ```
-biom convert -i table.biom -o table.from_biom.txt --to-tsv
+biom convert -i feature-table.biom -o feature-table.txt --to-tsv
 ```
 
 ---
