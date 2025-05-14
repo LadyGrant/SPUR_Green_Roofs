@@ -5,6 +5,8 @@ We used the **515F/806R V4 primers** from the Earth Microbiome Project (EMP):
  [Earth Microbiome Project protocol](https://earthmicrobiome.org/protocols-and-standards/)
 
 ```
+source /home/opt/Miniconda3/miniconda3/bin/activate qiime2-2023.9
+
 qiime tools import \
   --type EMPPairedEndSequences \
   --input-path reads \
