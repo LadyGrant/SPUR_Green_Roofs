@@ -30,6 +30,7 @@ Amplicon sequencing of 16S rRNA genes was used alongside soil chemical and enzym
 ## Workflow Documentation
 
 - [QIIME2 Workflow (Amplicon Processing)](qiime2_workflow.md)
+- [Merging QIIME2 datasets](Merging_QIIME2_datasets.md)
 
 This document includes detailed steps for:
 - Importing and demultiplexing reads
