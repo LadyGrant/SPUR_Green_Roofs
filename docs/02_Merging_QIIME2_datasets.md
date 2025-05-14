@@ -20,6 +20,16 @@ Before merging:
   - `table_2024.qza`
   - `rep-seqs_2024.qza`
 
+⚠️ **Important: Avoid Duplicate Sample IDs Across Runs**
+
+QIIME2 does not allow merging datasets that contain duplicate sample IDs.
+If you're working with multi-year or multi-batch data, make sure **all sample names are unique** before processing.
+
+✅ Recommended: Append the year or batch to all sample IDs (e.g., `H3RZ_A_2023`, `NTC1_2024`)
+
+If duplicates are present, QIIME2 will raise an error during merging, and you’ll need to reprocess at least up to the DADA2 step with corrected sample names.
+
+
 ## Step 1: Merge Feature Tables
 
 ```
