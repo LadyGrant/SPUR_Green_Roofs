@@ -121,6 +121,8 @@ Example:
 - Overlap = 420 – 253 = **167 bp**, plenty for successful merging
 
 Reminder: Over-trimming will result in too little overlap for read merging; under-trimming can retain low-quality bases that increase error rates. Always use the quality plot to balance both.
+
+⚠️ Although the 2023 reads have higher quality scores than 2024, we trimmed both datasets to the same length to ensure consistent ASV boundaries for merging.
 <img width="1425" alt="Screenshot 2025-05-08 at 7 57 44 PM" src="https://github.com/user-attachments/assets/3544c0d1-c4be-4ab9-9299-ad871019eb39" />
 
 ## 4. Run DADA2 to denoise and merge sequence reads
