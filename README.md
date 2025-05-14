@@ -79,7 +79,7 @@ qiime demux summarize --i-data demux.qza --o-visualization demux.qzv
 
 Open the resulting .qzv file in [QIIME2 View](https://view.qiime2.org/) to explore the interactive summary. 
 
-# Overview of demux.qzv Summary Tabs
+## Overview of demux.qzv Summary Tabs
 
 Demultiplexed Sequence Counts Summary
 - Table with min, max, mean, median, and total read counts across all samples
@@ -190,17 +190,223 @@ qiime metadata tabulate \
 | `non-chimeric` | Merged reads after chimera removal    | This is what gets used in downstream analysis **(your final usable data)** |
 | `percentage of input non-chimeric` | % of original reads that made it all the way through | <50% suggests high loss; ideally you want >60% of input|
 
+Visualize feature-table
 ```
 qiime feature-table summarize \
  --i-table table.qza  \
  --o-visualization table.qzv \
  --m-sample-metadata-file metadata.txt
 ```
+## DADA2 Feature Table Summary Explained
+This file summarizes your final ASV (amplicon sequence variant) table after DADA2. It contains **three pages** in QIIME2 View.
+
+## Overall summary of samples and features - Page 1 
+
+<img width="738" alt="Screenshot 2025-05-13 at 11 05 54 AM" src="https://github.com/user-attachments/assets/0058eb68-1097-429f-a4dd-e22fd221b749" />  
+
+
+| Metric                            | Meaning                                                                                                        |
+| --------------------------------- | ---------------------------------------------------------------------------------------------------------------|
+| Number of samples      | Number of samples that passed **all steps** and are represented in your ASV table.  |
+| Number of features     | This is your total count of **unique ASVs**. Each one represents a distinct sequence variant inferred by DADA2.|
+| Total frequency        | This is the **sum of all read counts across all samples and all ASVs**. It’s your full sequencing depth after filtering, denoising, and chimera removal. |
+
+<img width="1441" alt="Screenshot 2025-05-13 at 11 17 10 AM" src="https://github.com/user-attachments/assets/5ea8614c-3f20-4a94-a089-3c5b8c39e58c" />  
+This section of the first page shows the distribution of read depth per sample. It's a quick way to assess how evenly your sequencing was distributed. Histogram on the right: Visually shows the distribution of sequencing depth across all your samples  
+
+| Metric                              | What It Tells You                            |
+| ----------------------------------- | -------------------------------------------- |
+| Minimum frequency         | Your monst shallow sequenced sample, typically an NTC  |
+| 1st quartile       | 25% of samples have fewer than this many reads                |
+| Median frequency   | Half of your samples have fewer than \~69k reads              |
+| 3rd quartile      | 75% of samples are under this value                            |
+| Maximum frequenc  | Your most deeply sequenced sample                              |
+| Mean frequency      | Average sequencing depth across all samples                  |
+ 
+
+<img width="1421" alt="Screenshot 2025-05-13 at 11 33 25 AM" src="https://github.com/user-attachments/assets/3de99d99-fba7-41b9-8760-9997d0f8b483" />
+
+This shows how abundant each ASV (feature) is across your dataset. It’s a key view for deciding how to filter low-abundance or rare features. Histogram on the right: Log-scale histogram of how many ASVs fall into different abundance ranges. Most ASVs are ultra-rare, with only a handful showing up more than a few hundred times. This is typical for microbiome datasets, especially soil and rhizosphere systems with long tails of diversity. 
+
+| Metric                            | What It Tells You                                                                                  |
+| --------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| Minimum frequency       | Features (ASVs) that appear **only twice total** in your entire dataset — likly noise or extraction kit contaminants. |
+| 1st quartile            | 25% of your ASVs have **6 reads or fewer** — likely your NTC's.                                                      |
+| Median frequency       | Half of your ASVs have **fewer than 14 total reads** — this is very common in high-diversity systems like soil.    |
+| 3rd quartile     | 75% of your ASVs have under 50 reads — lots of low-abundance features, again, common in soils.                              |
+| Maximum frequenc   | One dominant ASV appears almost 200k times — likely a key core member.                                             |
+| Mean frequency      | Average abundance across all ASVs. Skewed by a few highly abundant taxa.                                           |
+
+
+## Feature Table Visualization (`table.qzv`) — Pages 2 & 3
+
+## Page 2: Interactive Sample Detail
+
+This page provides a searchable, sortable summary of each sample in your ASV table, including:
+
+- **Sample ID**
+- **Total frequency (number of reads)**
+- **Metadata columns** (from your `metadata.txt` file)
+
+**Use this page to:**
+- Identify samples with **very low read counts** (e.g., <10,000), which may be removed before diversity analyses.
+- Confirm that your **metadata file matches the sample IDs** from the sequencing run.
+- Visually explore **read depth trends across timepoints, treatments, or sites**.
+
+## Page 3: Interactive Feature Detail
+
+This page displays every **ASV (feature)** in the table with:
+
+- **Feature ID**
+- **Total frequency (how many reads it has across all samples)**
+- **Prevalence** (number of samples it appears in)
+
+**Use this page to:**
+- Identify **dominant ASVs** that appear in many samples or with high abundance.
+- Flag **rare ASVs** (e.g., features found in only 1 sample or <10 reads) for potential filtering.
+- Export ASV tables for downstream filtering, taxonomic assignment, or visualization.
+
+Visualize rep-seqs 
 ```
 qiime feature-table tabulate-seqs \
 --i-data rep-seqs.qza \
 --o-visualization rep-seqs.qzv
 ```
+This visualization shows all **unique ASV sequences** inferred during denoising (via DADA2), along with:
+
+- **Feature ID** — the hash-like identifier (e.g., `f47c1c7b1f0a2f73...`)
+- **Sequence** — the actual 16S rRNA gene fragment (nucleotide sequence), you can use this in BLAST if needed
+- **Sequence length** — number of base pairs (should be consistent if region was trimmed uniformly), (scroll all the way to the right)
+
+## 6. Assign Taxonomy to Reads
+
+⚠️ **Why GTDB alone is not enough for amplicon data:**
+
+GTDB is optimized for **whole-genome phylogeny of bacteria and archaea**. It was **not designed to classify 16S reads** that might include **chloroplasts, mitochondria, or eukaryotes**.
+
+When used with QIIME2's `feature-classifier classify-sklearn`, GTDB doesn’t flag these sequences as “unassigned.” Instead, it **forces them into the closest bacterial match**, which can lead to inaccurate classifications:
+
+- **Chloroplasts** (from plant DNA) → misclassified as **Cyanobacteriota**
+- **Mitochondria** → misclassified as **Alphaproteobacteria**
+- **Eukaryotic reads** → randomly misassigned to bacterial groups like **Planctomycetota** or **Verrucomicrobiota**
+- Some appear as **`Unclassified` or `d__Bacteria;__;__;...`**, but not reliably
+
+## **Best Practice Workflow**  
+This hybrid approach ensures you're not falsely inflating bacterial diversity by misclassifying organelles or eukaryotic reads, while still aligning with GTDB-based MAG analysis downstream.
+
+If you're working with both **ASVs and MAGs**, and you want to use GTDB for consistency in MAG taxonomy:
+
+A. **First classify ASVs using SILVA**
+   - SILVA accurately identifies and labels **chloroplasts**, **mitochondria**, and **eukaryotes**
+
+B. **Filter out unwanted taxa** (chloroplasts, mitochondria, euks) from your SILVA-classified table
+
+C. **Join the cleaned ASV list** with GTDB classifications using **ASV ID** as the key in R
+   - This allows you to keep **GTDB taxonomy for downstream analysis** without retaining contamination
+
+D. **Keep a copy of the merged table** (e.g., `taxonomy-merged-silva-gtdb.txt`) in case you need to trace or validate assignments later
+
+## Silva classification
+```
+#!/bin/bash
+#SBATCH --nodes=1
+#SBATCH --ntasks=4
+#SBATCH --time=4-00:00:00
+#SBATCH --mail-type=BEGIN,END,FAIL
+#SBATCH --mem=20gb
+#SBATCH --mail-user=First.Last@colostate.edu
+#SBATCH --mail-type=BEGIN,END,FAIL
+#SBATCH --partition=wrighton-hi,wrighton-low
+#SBATCH --job-name=Silva138
+
+source /home/opt/Miniconda3/miniconda3/bin/activate qiime2-2023.9
+
+qiime feature-classifier classify-sklearn \
+--i-classifier /home/Database/qiime2/classifiers/qiime2-2023.9/silva-138-99-515-806-nb-classifier.qza \
+--i-reads rep-seqs.qza \
+--o-classification taxonomy_silva138.qza
+```
+## GTDB classification
+```
+#!/bin/bash
+#SBATCH --nodes=1
+#SBATCH --ntasks=4
+#SBATCH --time=4-00:00:00
+#SBATCH --mail-type=BEGIN,END,FAIL
+#SBATCH --mem=20gb
+#SBATCH --nodelist=zenith
+#SBATCH --mail-user=eryn.grant@colostate.edu
+#SBATCH --mail-type=BEGIN,END,FAIL
+#SBATCH --partition=wrighton-hi,wrighton-low
+#SBATCH --job-name=GTDB220
+
+source /home/opt/Miniconda3/miniconda3/bin/activate qiime2-2023.9
+
+qiime feature-classifier classify-sklearn \
+--i-classifier /home/Database/qiime2/classifiers/qiime2-2023.9/GTDBclassifier220_EMP.qza \
+--i-reads rep-seqs.qza \
+--o-classification taxonomy_gtdb_220.qza
+```
+Visualize taxonomy table
+```
+qiime metadata tabulate \
+--m-input-file taxonomy_gtdb_220.qza \
+--o-visualization taxonomy_gtdb_2204.qzv
+```
+You can also make stacked taxonomy plots from this step
+```
+qiime taxa barplot \
+  --i-table table.qza \
+  --i-taxonomy taxonomy_silva138.qza \
+  --m-metadata-file metadata.txt \
+  --o-visualization taxa-barplot_silva138.qzv
+```
+## 7. Filter out Chloroplast and Mitochondria reads
+```
+qiime taxa filter-table \
+--i-table table.qza  \
+--i-taxonomy taxonomy_silva138.qza \
+--p-exclude mitochondria,chloroplast,Unassigned,Eukaryota \
+--o-filtered-table taxonomy_silva138_CLEAN.qza
+```
+Notes:
+- --p-exclude matches **case-insensitively** to taxonomy strings.
+
+Visualize clean taxonomy table to double check that your filtering step worked correctly
+```
+qiime metadata tabulate \
+--m-input-file taxonomy_silva138_CLEAN.qza \
+--o-visualization taxonomy_silva138_CLEAN.qzv
+```
+
+## 8. Convert raw feature table to text file
+This will produce a .biom file in a new folder. The new folder will have a name that is a string of letters and numbers.  
+Ex: 105a399a-1af3-42df-a83e-e2a23a03a103  
+You will need to go into this folder and then into a folder named `data`. Once there, you will find the `feature-table.biom`. depending on your downstream workflow you can use the .biom format or you can convert it to a .txt file. 
+
+|Tool / Library     | Accepts `.biom`? | Preferred Format | Notes | 
+| ------------------|------------------|------------------|------------------------------------------------------------- |
+| [QIIME2](https://qiime2.org)            | ✅ Yes           |  `.biom`         | Native format                                                |
+| [Phyloseq (R)](https://joey711.github.io/phyloseq/)      | ✅ Yes           | `.biom`          | Import .biom files directly `use import_biom())`             |
+| [MicrobiomeAnalyst](https://www.microbiomeanalyst.ca/) | ✅ Yes           | `.biom`, `.tsv`  | Web-based — accepts `.biom` or `.tsv`                        |
+| [LEfSe/ MaAsLin2 (Galaxy)](https://huttenhower.sph.harvard.edu/galaxy/)    | ❌ No            | `.txt`           | LEfSe-specific format                                        |
+
+
+Convert from .biom to .txt
+```
+biom convert -i table.biom -o table.from_biom.txt --to-tsv
+```
+
+---
+
+📅 **Note on Multi-Year Data**
+
+This project includes two separate years of amplicon sequencing data.  
+For downstream analysis, the datasets are processed separately through denoising (DADA2),  
+then **merged prior to taxonomy classification** to ensure consistent ASV tracking.
+
+See the section on **merging multiple datasets** for details on how to combine `table.qza` and `rep-seqs.qza` files across years.
+
 
 
 
