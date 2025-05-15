@@ -368,7 +368,7 @@ qiime taxa barplot \
 ## 7. Filter out Chloroplast and Mitochondria reads
 ```
 qiime taxa filter-table \
---i-table table.qza  \
+--i-table table.qza \
 --i-taxonomy taxonomy_silva138.qza \
 --p-exclude mitochondria,chloroplast,Unassigned,Eukaryota \
 --o-filtered-table taxonomy_silva138_CLEAN.qza
