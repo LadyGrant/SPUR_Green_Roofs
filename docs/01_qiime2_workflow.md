@@ -395,8 +395,11 @@ You will need to go into this folder and then into a folder named `data`. Once t
 | [MicrobiomeAnalyst](https://www.microbiomeanalyst.ca/) | ✅ Yes           | `.biom`, `.tsv`  | Web-based — accepts `.biom` or `.tsv`                        |
 | [LEfSe/ MaAsLin2 (Galaxy)](https://huttenhower.sph.harvard.edu/galaxy/)    | ❌ No            | `.txt`           | LEfSe-specific format                                        |
 
-
 Convert from .biom to .txt
+
+```
+unzip taxonomy_silva138_CLEAN.qza
+```
 ```
 biom convert -i feature-table.biom -o feature-table.txt --to-tsv
 ```
